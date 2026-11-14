@@ -1,0 +1,816 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Predictor</title>
+
+    <!-- Bibliothèque de visualisation 3D -->
+    <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #f3f6fb;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, #102a43, #176b70);
+            color: white;
+            padding: 35px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 32px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #d5e9e9;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 1150px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(20, 40, 60, 0.06);
+        }
+
+        h2 {
+            color: #123b50;
+            font-size: 21px;
+            margin-bottom: 18px;
+        }
+
+        h3 {
+            color: #176b70;
+            font-size: 17px;
+            margin-bottom: 15px;
+        }
+
+        .description {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 9px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #176b70;
+            box-shadow: 0 0 0 3px rgba(23, 107, 112, 0.12);
+        }
+
+        button {
+            background: #176b70;
+            color: white;
+            border: none;
+            padding: 13px 25px;
+            border-radius: 9px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #105258;
+            transform: translateY(-1px);
+        }
+
+        .main-button {
+            margin-top: 15px;
+            width: 100%;
+        }
+
+        .examples {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .examples span {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .example-button {
+            background: #e7f2f2;
+            color: #176b70;
+            padding: 7px 12px;
+            font-size: 13px;
+        }
+
+        .example-button:hover {
+            background: #cfe6e5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            display: none;
+            font-size: 14px;
+        }
+
+        .error {
+            display: block !important;
+            color: #991b1b;
+            background: #fee2e2;
+        }
+
+        .success {
+            display: block !important;
+            color: #166534;
+            background: #dcfce7;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .stat {
+            background: #f0f7f7;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #176b70;
+        }
+
+        .stat-title {
+            color: #64748b;
+            font-size: 13px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #123b50;
+            font-size: 23px;
+            font-weight: 700;
+        }
+
+        .temperature {
+            background: linear-gradient(135deg, #102a43, #176b70);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .temperature h3 {
+            color: #d5e9e9;
+        }
+
+        .temperature-values {
+            display: flex;
+            justify-content: center;
+            gap: 50px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .temperature-values strong {
+            display: block;
+            font-size: 30px;
+        }
+
+        .temperature-values span {
+            color: #d5e9e9;
+            font-size: 13px;
+        }
+
+        .viewer-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        #viewer {
+            width: 100%;
+            height: 430px;
+            position: relative;
+            display: block;
+            overflow: hidden;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+        }
+
+        .viewer-note {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            min-width: 450px;
+        }
+
+        th {
+            background: #eaf2f3;
+            color: #123b50;
+            text-align: left;
+            padding: 13px;
+        }
+
+        td {
+            padding: 12px 13px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        .smiles-info {
+            background: #f0f7f7;
+            padding: 18px;
+            border-radius: 10px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .smiles-info code {
+            background: #dceaea;
+            padding: 3px 7px;
+            border-radius: 4px;
+            color: #105258;
+        }
+
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 25px;
+            }
+
+            .card {
+                padding: 18px;
+            }
+
+            .temperature-values {
+                gap: 25px;
+            }
+
+            #viewer {
+                height: 330px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>⚗ Molecular Predictor</h1>
+    <p>Estimation de la température d'ébullition à partir de la structure moléculaire</p>
+</header>
+
+<main class="container">
+
+    <!-- SAISIE SMILES -->
+    <section class="card">
+        <h2>1. Analyse moléculaire</h2>
+
+        <p class="description">
+            Entrez la représentation SMILES de votre molécule
+            pour obtenir ses propriétés et sa structure 3D.
+        </p>
+
+        <form id="moleculeForm">
+            <label for="smiles">Structure SMILES</label>
+
+            <input
+                type="text"
+                id="smiles"
+                placeholder="Exemple : CCO"
+                required
+            >
+
+            <button type="submit" class="main-button" id="analyzeButton">
+                Analyser la molécule
+            </button>
+        </form>
+
+        <div class="examples">
+            <span>Exemples :</span>
+
+            <button class="example-button" type="button"
+                onclick="setSMILES('O')">Eau</button>
+
+            <button class="example-button" type="button"
+                onclick="setSMILES('C')">Méthane</button>
+
+            <button class="example-button" type="button"
+                onclick="setSMILES('CCO')">Éthanol</button>
+
+            <button class="example-button" type="button"
+                onclick="setSMILES('CC(=O)C')">Acétone</button>
+
+            <button class="example-button" type="button"
+                onclick="setSMILES('c1ccccc1')">Benzène</button>
+        </div>
+
+        <div id="message"></div>
+    </section>
+
+
+    <!-- RESULTATS -->
+    <div id="resultats" class="hidden">
+
+        <!-- INFORMATIONS -->
+        <section class="card">
+            <h2>2. Propriétés moléculaires</h2>
+
+            <div class="stats">
+
+                <div class="stat">
+                    <div class="stat-title">Formule moléculaire</div>
+                    <div class="stat-value" id="formula">--</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-title">Masse molaire</div>
+                    <div class="stat-value" id="mass">--</div>
+                    <small>g/mol</small>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-title">Nombre total d'atomes</div>
+                    <div class="stat-value" id="atoms">--</div>
+                </div>
+
+                <div class="stat">
+                    <div class="stat-title">Nombre de liaisons</div>
+                    <div class="stat-value" id="bonds">--</div>
+                </div>
+
+            </div>
+
+            <div class="temperature">
+                <h3>Température d'ébullition estimée</h3>
+
+                <div id="temperatureResult">
+                    <p>Résultat en attente...</p>
+                </div>
+            </div>
+
+            <p id="jobackMessage" class="description" style="margin-top:15px;"></p>
+        </section>
+
+
+        <!-- VISUALISATION 3D -->
+        <section class="card">
+            <h2>3. Structure moléculaire en 3D</h2>
+
+            <p class="description">
+                Visualisation interactive des atomes et des liaisons.
+                Tu peux faire tourner et zoomer sur la molécule.
+            </p>
+
+            <div class="viewer-layout">
+                <div id="viewer"></div>
+                <p class="viewer-note">
+                    Les atomes sont représentés par des sphères
+                    et les liaisons par des bâtonnets.
+                </p>
+            </div>
+        </section>
+
+
+        <!-- TABLEAU ATOMES -->
+        <section class="card">
+            <h2>4. Détail des atomes</h2>
+
+            <p class="description">
+                Cette table présente tous les atomes de la molécule,
+                y compris les atomes d'hydrogène.
+            </p>
+
+            <div class="table-wrapper">
+                <table id="atomTable">
+                    <thead>
+                        <tr>
+                            <th>Index</th>
+                            <th>Élément</th>
+                            <th>Symbole</th>
+                            <th>Numéro atomique</th>
+                            <th>Charge</th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- TABLEAU LIAISONS -->
+        <section class="card">
+            <h2>5. Détail des liaisons chimiques</h2>
+
+            <p class="description">
+                Identification des atomes reliés et du type de liaison.
+            </p>
+
+            <div class="table-wrapper">
+                <table id="bondTable">
+                    <thead>
+                        <tr>
+                            <th>Atomes liés</th>
+                            <th>Indices des atomes</th>
+                            <th>Type de liaison</th>
+                        </tr>
+                    </thead>
+
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- INFORMATIONS SMILES -->
+        <section class="card">
+            <h2>6. Comprendre la représentation SMILES</h2>
+
+            <div class="smiles-info">
+                <p>
+                    <strong>SMILES :</strong>
+                    <code id="displaySmiles">--</code>
+                </p>
+
+                <br>
+
+                <p><strong>Comment lire une structure SMILES ?</strong></p>
+
+                <ul style="padding-left:20px; margin-top:10px;">
+                    <li><code>C</code> : Carbone</li>
+                    <li><code>O</code> : Oxygène</li>
+                    <li><code>N</code> : Azote</li>
+                    <li><code>=</code> : Liaison double</li>
+                    <li><code>#</code> : Liaison triple</li>
+                    <li><code>( )</code> : Ramification</li>
+                    <li><code>1, 2...</code> : Fermeture de cycle</li>
+                </ul>
+
+                <br>
+
+                <p>
+                    Les hydrogènes ne sont généralement pas écrits
+                    explicitement dans la formule SMILES.
+                    Ils sont ajoutés automatiquement par RDKit
+                    pour la visualisation et le comptage des atomes.
+                </p>
+            </div>
+        </section>
+
+    </div>
+
+</main>
+
+<footer>
+    Molecular Predictor | Analyse et visualisation moléculaire
+</footer>
+
+
+<script>
+
+    const form = document.getElementById("moleculeForm");
+    const resultats = document.getElementById("resultats");
+    const message = document.getElementById("message");
+    const analyzeButton = document.getElementById("analyzeButton");
+
+    let viewer = null;
+
+
+    // Remplir le champ avec un exemple
+    function setSMILES(value) {
+        document.getElementById("smiles").value = value;
+    }
+
+
+    // Afficher les messages
+    function showMessage(text, type) {
+        message.textContent = text;
+        message.className = type;
+    }
+
+
+    // Visualisation 3D
+    function afficher3D(molblock) {
+
+        const element = document.getElementById("viewer");
+
+        if (!window.$3Dmol) {
+            throw new Error(
+                "La bibliothèque 3D n'a pas pu être chargée. Vérifie ta connexion Internet."
+            );
+        }
+
+        if (!viewer) {
+            viewer = $3Dmol.createViewer(element, {
+                backgroundColor: "white"
+            });
+        }
+
+        viewer.clear();
+
+        viewer.addModel(molblock, "mol");
+
+        viewer.setStyle({}, {
+            stick: {
+                radius: 0.16
+            },
+            sphere: {
+                scale: 0.25
+            }
+        });
+
+        viewer.zoomTo();
+        viewer.resize();
+        viewer.render();
+    }
+
+
+    // Remplir le tableau des atomes
+    function afficherAtomes(atomDetails) {
+
+        const atomBody = document.querySelector("#atomTable tbody");
+
+        atomBody.innerHTML = "";
+
+        const elements = {
+            C: "Carbone",
+            H: "Hydrogène",
+            O: "Oxygène",
+            N: "Azote",
+            S: "Soufre",
+            F: "Fluor",
+            Cl: "Chlore",
+            Br: "Brome",
+            I: "Iode"
+        };
+
+        atomDetails.forEach(atom => {
+
+            const row = document.createElement("tr");
+
+            const name = elements[atom.symbol] || atom.symbol;
+
+            row.innerHTML = `
+                <td>${atom.index}</td>
+                <td>${name}</td>
+                <td><strong>${atom.symbol}</strong></td>
+                <td>${atom.atomic_number}</td>
+                <td>${atom.charge}</td>
+            `;
+
+            atomBody.appendChild(row);
+        });
+    }
+
+
+    // Remplir le tableau des liaisons
+    function afficherLiaisons(bondDetails) {
+
+        const bondBody = document.querySelector("#bondTable tbody");
+
+        bondBody.innerHTML = "";
+
+        const bondNames = {
+            SINGLE: "Simple",
+            DOUBLE: "Double",
+            TRIPLE: "Triple",
+            AROMATIC: "Aromatique"
+        };
+
+        bondDetails.forEach(bond => {
+
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+                <td>${bond.symbol1} – ${bond.symbol2}</td>
+                <td>${bond.atom1} – ${bond.atom2}</td>
+                <td>${bondNames[bond.type] || bond.type}</td>
+            `;
+
+            bondBody.appendChild(row);
+        });
+    }
+
+
+    // Envoyer les données au serveur Flask
+    form.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const smiles = document.getElementById("smiles").value.trim();
+
+        if (!smiles) {
+            showMessage("Veuillez entrer une structure SMILES.", "error");
+            return;
+        }
+
+        resultats.classList.add("hidden");
+        message.style.display = "block";
+        showMessage("Analyse de la molécule en cours...", "success");
+
+        analyzeButton.textContent = "Analyse en cours...";
+        analyzeButton.disabled = true;
+
+        try {
+
+            const response = await fetch("/analyser", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    smiles: smiles
+                })
+
+            });
+
+
+            const data = await response.json();
+
+            if (!response.ok || data.error) {
+                throw new Error(data.error || "Une erreur est survenue.");
+            }
+
+
+            // Afficher les informations
+            document.getElementById("formula").textContent = data.formula;
+
+            document.getElementById("mass").textContent =
+                Number(data.mass).toFixed(3);
+
+            document.getElementById("atoms").textContent = data.atoms;
+
+            document.getElementById("bonds").textContent = data.bonds;
+
+            document.getElementById("displaySmiles").textContent = data.smiles;
+
+
+           // Température d'ébullition
+const temperatureResult = document.getElementById("temperatureResult");
+
+const blocs = [];
+
+if (data.calculation_available && data.Tb_K !== null) {
+    blocs.push(`
+        <div>
+            <strong>${Number(data.Tb_K).toFixed(1)} K</strong>
+            <span>Estimation Joback (${Number(data.Tb_C).toFixed(1)} °C)</span>
+        </div>
+    `);
+}
+
+if (data.Tb_exp_K !== null) {
+    blocs.push(`
+        <div>
+            <strong>${Number(data.Tb_exp_K).toFixed(1)} K</strong>
+            <span>Valeur expérimentale (${Number(data.Tb_exp_C).toFixed(1)} °C)</span>
+        </div>
+    `);
+}
+
+if (blocs.length > 0) {
+
+    let html = `<div class="temperature-values">${blocs.join("")}</div>`;
+
+    if (data.ecart_K !== null) {
+        const signe = data.ecart_K > 0 ? "+" : "";
+        html += `
+            <p style="margin-top:15px; color:#d5e9e9; font-size:14px;">
+                Écart Joback − expérience : ${signe}${data.ecart_K.toFixed(1)} K
+                (${signe}${data.ecart_pct.toFixed(1)} %)
+            </p>`;
+    }
+
+    if (data.nom_substance) {
+        html += `
+            <p style="margin-top:5px; color:#d5e9e9; font-size:13px;">
+                Substance identifiée : ${data.nom_substance} (CAS ${data.cas})
+            </p>`;
+    }
+
+    temperatureResult.innerHTML = html;
+
+} else {
+
+    temperatureResult.innerHTML = `
+        <p>Aucune température d'ébullition disponible pour cette molécule.</p>
+    `;
+}
+            // Message Joback
+            document.getElementById("jobackMessage").textContent =
+                data.joback_message || "";
+
+
+            // Afficher les tableaux
+            afficherAtomes(data.atom_details);
+            afficherLiaisons(data.bond_details);
+
+
+            // Rendre les résultats visibles AVANT la 3D
+            resultats.classList.remove("hidden");
+
+            showMessage("Analyse terminée avec succès.", "success");
+
+
+            // Afficher la molécule dans son emplacement
+            requestAnimationFrame(() => {
+
+                try {
+                    afficher3D(data.molblock);
+                } catch (error3D) {
+                    showMessage(error3D.message, "error");
+                }
+
+            });
+
+            // Aller vers les résultats
+            resultats.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+
+        } catch (error) {
+
+            showMessage(error.message, "error");
+
+        } finally {
+
+            analyzeButton.textContent = "Analyser la molécule";
+            analyzeButton.disabled = false;
+
+        }
+
+    });
+
+</script>
+
+</body>
+</html>
